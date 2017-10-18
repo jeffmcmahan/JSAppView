@@ -58,7 +58,6 @@ try {
 Has not been written yet.
 
 ## Swift 4 + Xcode 9
-
 Add JSAppView.swift, JSAppViewFileSystem.swift and JSAppView.js to your project. Add index.html and other core web app files to the project. All will be copied into the app's Documents directory and run from there. In the main storyboard, create a WKWebView with a subview, and attach it to ViewController.swift. It should look as shown below (as a starting point). 
 
 ```swift

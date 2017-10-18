@@ -24,7 +24,9 @@ class JSAppViewFileSystem {
     private func readFileAsUtf8(filePath: URL) -> String {
         do {
             let data = try String(contentsOf: filePath,  encoding: .utf8)
-            return "`" + data + "`"
+            let data2 = data.replacingOccurrences(of: "`", with: "\\`")
+            let safeData = data2.replacingOccurrences(of: "${", with: "\\${")
+            return "`" + safeData + "`"
         } catch(let error) {
             let desc = String(describing: error)
             print(desc)

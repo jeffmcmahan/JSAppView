@@ -101,6 +101,11 @@
           console.log(result)
           reject(result)
         } else {
+          console.log(typeof result)
+          if (typeof result === 'string') {
+            result = result.split('\\`').join('`').split('\\${').join('${')
+            
+          }
           resolve(result)
         }
       }
