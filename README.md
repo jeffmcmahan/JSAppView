@@ -57,9 +57,9 @@ try {
 ```
 
 ### SQLite (@todo)
-The idea is to make a single SQLite database available via an `.sqlite` member, to which SQL statements are passed, and promises resolve results or reject with errors. Nothing more---no query generation, or other helpers.
+The idea is to make a single SQLite database available via an `.sqlite` member, to which SQL statements are passed, and promises resolves a result (with basic type casts for primitives) or reject with errors. Nothing more---no query generation, or other helpers.
 
-```
+```js
 const {sqlite} = window.JSAppView
 
 try {
