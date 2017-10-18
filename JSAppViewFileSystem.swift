@@ -96,7 +96,15 @@ class JSAppViewFileSystem {
      - returns: String - a javascript expression
     */
     public func writeFile (fname: String, data: String) -> String {
-        return "new Error('writeFile does not work yet.')"
+        let path = URL(string: self.path + fname)
+        do {
+            try data.write(to: path!, atomically: true, encoding: .utf8)
+            return "'\(String(describing: path))'"
+        } catch let error {
+            let desc = "writeFile failed. \(String(describing: error))"
+            print(desc)
+            return "new Error('\(desc)')"
+        }
     }
     
     /**
@@ -105,7 +113,22 @@ class JSAppViewFileSystem {
      - returns: String - a javascript expression
     */
     public func unlink(fname: String) -> String {
-        return "new Error('unlink does not work yet.')"
+        let path = URL(string: self.path + fname)
+        let doesExist = ((try? path?.checkResourceIsReachable()) ?? false)!
+        if (!doesExist) {
+            let desc = "Cannot delete file \(fname) because it does not exist."
+            print(desc)
+            return "new Error('\(desc)')"
+        }
+        do {
+            let fileManager = FileManager.default
+            try fileManager.removeItem(at: path!)
+            return "'\(String(describing: path))'"
+        } catch (let error) {
+            let desc = String(describing: error)
+            print(desc)
+            return "new Error('\(desc)')"
+        }
     }
     
     /**

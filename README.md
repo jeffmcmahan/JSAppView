@@ -10,10 +10,10 @@ fs.root                                          // String - 'file://.../Documen
 fs.getFileURL(basename:String)                   // String - 'file://.../Documents/<basename>'
 fs.exists(basename:String)                       // Promise<Boolean>
 fs.readFile(basename:String, encoding:String)    // Promise<String>
-fs.writeFile(basename:String, data:String)       // Promise<void>
+fs.writeFile(basename:String, data:String)       // Promise<String> - file:// URL of the file
 fs.readdir()                                     // Promise<Array> - /Documents contents
-fs.unlink(basename:String)                       // Promise<void>
-fs.downloadToFile(url:String, basename:String)   // Promise<void>
+fs.unlink(basename:String)                       // Promise<String> - file:// URL of the file
+fs.downloadToFile(url:String, basename:String)   // Promise<Object> - {url, status}
 fs.downloadFiles(urls:Array<String>)             // Promise<Array<Object>> with progress API
 ```
 
