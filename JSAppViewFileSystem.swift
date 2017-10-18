@@ -1,11 +1,3 @@
-//
-//  JSAppViewFileSystem.swift
-//  Test
-//
-//  Created by Jeff McMahan on 10/9/17.
-//  Copyright © 2017 Jeff McMahan. All rights reserved.
-//
-
 import WebKit
 
 class JSAppViewFileSystem {
