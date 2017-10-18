@@ -3,10 +3,6 @@
   'use strict'
 
   // @todo SQLite
-  // @todo Listen for a dev mode sequence of keystrokes, like: "--jsdevmode"
-  // @todo Allow code to set JSAppView.jsdevmode to true
-  // @todo - A simple JS REPL/console available in dev mode
-  // @todo - A basic jQuery-driven DOM inspection tool, available in dev mode.
 
   const noop = ()=>{}
 
