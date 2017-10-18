@@ -2,28 +2,18 @@
 ## Javascript API
 On the main WKWebView javascript thread (i.e., in your web app), you can access the API at `window.JSAppView`. It has two properties: `fs`, which is the file system API and `sqlite` which is the database API.
 
-Note: The API is ready before your app can start, so there's no "ready" event to subscribe to.
-
 ### File System
 ```js
 const {fs} = window.JSAppView
 
 fs.root                                          // String - 'file://.../Documents
-
 fs.getFileURL(basename:String)                   // String - 'file://.../Documents/<basename>'
-
 fs.exists(basename:String)                       // Promise<Boolean>
-
 fs.readFile(basename:String, encoding:String)    // Promise<String>
-
 fs.writeFile(basename:String, data:String)       // Promise<void>
-
 fs.readdir()                                     // Promise<Array> - /Documents contents
-
 fs.unlink(basename:String)                       // Promise<void>
-
 fs.downloadToFile(url:String, basename:String)   // Promise<void>
-
 fs.downloadFiles(urls:Array<String>)             // Promise<Array<Object>> with progress API
 ```
 
