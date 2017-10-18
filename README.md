@@ -1,4 +1,6 @@
 # JSAppView
+JSAppView is a swift class that extends iOS's WKWebView class to offer persistent storage via a node.js-like API, and easy including of local files within the web view.
+
 ## Javascript API
 On the main WKWebView javascript thread (i.e., in your web app), you can access the API at `window.JSAppView`. It has two properties: `fs`, which is the file system API and `sqlite` which is the database API.
 
@@ -22,9 +24,9 @@ fs.downloadFiles(urls:Array<String>)             // Promise<Array<Object>> with 
 
 ```js
 [
-    {url: 'http://...', result: 'success'},
-    {url: 'http://...', result: new Error('...')},
-    ...
+  {url: 'http://...', result: 'success'},
+  {url: 'http://...', result: new Error('...')},
+  ...
 ]
 ```
 
@@ -34,28 +36,39 @@ Here's an example using the `.then()`-style:
 
 ```js
 function updateDOM(done, total) {
-    domElement.innerText = `${done} of ${total} downloaded`
+  domElement.innerText = `${done} of ${total} downloaded`
 }
 
 fs.downloadFiles(urls)
-    .progress(updateDOM)
-    .then(doSomething)
-    .catch(handleErr)
+  .progress(updateDOM)
+  .then(doSomething)
+  .catch(handleErr)
 ```
 
 And here's the same example using async/await:
 
 ```js
 try {
-    const results = await fs.downloadFiles(urls).progress(updateDOM)
-    doSomething(results)
+  const results = await fs.downloadFiles(urls).progress(updateDOM)
+  doSomething(results)
 } catch(err) {
-    handlerErr(err)
+  handlerErr(err)
 }
 ```
 
-### SQLite
-Has not been written yet.
+### SQLite (@todo)
+The idea is to make a single SQLite database available via an `.sqlite` member, to which SQL statements are passed, and promises resolve results or reject with errors. Nothing more---no query generation, or other helpers.
+
+```
+const {sqlite} = window.JSAppView
+
+try {
+  const results = await sqlite('select * from ...')
+  doSomething(results)
+} catch (err) {
+  console.log(err)
+}
+```
 
 ## Swift 4 + Xcode 9
 Add JSAppView.swift, JSAppViewFileSystem.swift and JSAppView.js to your project. Add index.html and other core web app files to the project. All will be copied into the app's Documents directory and run from there. In the main storyboard, create a WKWebView with a subview, and attach it to ViewController.swift. It should look as shown below (as a starting point). 
