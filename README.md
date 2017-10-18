@@ -5,7 +5,7 @@ On the main WKWebView javascript thread (i.e., in your web app), you can access 
 Note: The API is ready before your app can start, so there's no "ready" event to subscribe to.
 
 ### File System
-```
+```js
 const {fs} = window.JSAppView
 
 fs.root                                          // String - 'file://.../Documents
