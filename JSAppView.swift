@@ -1,5 +1,6 @@
 import WebKit
 let fs = JSAppViewFileSystem()
+let sqlite = JSAppViewSQLite(docsDir: fs.path)
 
 class JSAppView : WKWebView {
 
@@ -15,8 +16,9 @@ class JSAppView : WKWebView {
         config.userContentController = userContentController
         super.init(frame: viewController.view.bounds, configuration: config)
         self.scrollView.isScrollEnabled = false
-        
         userContentController.add(viewController, name: "PRINT")
+        
+        // File system message handlers:
         userContentController.add(viewController, name: "JSAppViewFileSystem_downloadToFile")
         userContentController.add(viewController, name: "JSAppViewFileSystem_downloadFiles")
         userContentController.add(viewController, name: "JSAppViewFileSystem_writeFile")
@@ -24,6 +26,9 @@ class JSAppView : WKWebView {
         userContentController.add(viewController, name: "JSAppViewFileSystem_readdir")
         userContentController.add(viewController, name: "JSAppViewFileSystem_exists")
         userContentController.add(viewController, name: "JSAppViewFileSystem_unlink")
+        
+        // SQLite message handler:
+        userContentController.add(viewController, name: "JSAppViewSQLite_query")
         
         self.copyResourcesToDocuments()
     }
@@ -159,6 +164,13 @@ extension ViewController : WKScriptMessageHandler {
             let id = args[0]
             let fname = args[1]
             let result = fs.unlink(fname: fname)
+            self.appview.jsCallback(id: id, js: result)
+        }
+        if (message.name == "JSAppViewSQLite_query") {
+            let args = message.body as! Array<String>
+            let id = args[0]
+            let sql = args[1]
+            let result = sqlite.query(sql: sql)
             self.appview.jsCallback(id: id, js: result)
         }
     }

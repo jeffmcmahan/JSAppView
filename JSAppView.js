@@ -230,6 +230,21 @@
     root: window.JSAppViewFileSystem_root
   }
 
+  /**
+   * Passes a string to the native SQLite query execution function.
+   * @param {String} sql
+   * @return {Promise<?>}
+   */
+  function sqlite(sql) {
+    if (typeof sql !== 'string') throw new Error(
+      'Non-string passed as SQL query.'
+    )
+    if (arguments.length !== 1) throw new Error(
+      `sqlite requires exactly 1 arguments. ${arguments.length} were passed.`
+    )
+    return systemCall('JSAppViewSQLite_query', arguments)
+  }
+
   delete window.JSAppViewFileSystem_root
-  window.JSAppView = {fs, sqlite:'Some day.', __callbacks:[], __progress:[]}
+  window.JSAppView = {fs, sqlite, __callbacks:[], __progress:[]}
 })();
