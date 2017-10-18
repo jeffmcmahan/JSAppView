@@ -121,6 +121,12 @@ class JSAppViewFileSystem {
         }
     }
     
+    /**
+     Downloads a single file from the given URL, and stores it with the given
+     filename (the 'to' param).
+     - parameter url: URL
+     - parameter to: String
+    */
     private func download(url: URL, to: String, completion: @escaping (_ result: String) -> Void) -> Void {
         let req = URLRequest(url: url)
         let task = URLSession.shared.downloadTask(with: req) { tmpUrl, response, error in
