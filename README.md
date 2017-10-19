@@ -57,7 +57,7 @@ try {
 ```
 
 ### SQLite (@todo)
-The idea is to make a single SQLite database available via an `.sqlite` member, to which SQL statements are passed, and promises resolve a result (with basic type casts for primitives) or reject with errors. Nothing more - no query generation, or other helpers.
+A single SQLite database is created and made available to your app, via an `.sqlite` member, to one or more semicolon-separated which SQL statements can be passed. The function returns a promise which resolves results or rejects with errors. Under the hood, this is done via the [SQLite C interface](https://sqlite.org/c3ref/exec.html), without third party libraries, wrappers, helpers, etc.).
 
 ```js
 const {sqlite} = window.JSAppView
@@ -71,14 +71,14 @@ try {
 ```
 
 ## Swift 4 + Xcode 9
-Add JSAppView.swift, JSAppViewFileSystem.swift and JSAppView.js to your project. Add index.html and other core web app files to the project. All will be copied into the app's Documents directory and run from there. In the main storyboard, create a WKWebView with a subview, and attach it to ViewController.swift. It should look as shown below (as a starting point). 
+Add JSAppView files to an Xcode project, along with core web app files. In the main storyboard, create a WKWebView with a subview, and attach it to ViewController.swift. It should look as shown below.
 
 ```swift
 import WebKit
 
 class ViewController: UIViewController {
 
-    @IBOutlet var appview: JSAppView! // JSAppView extends WKWebView
+    @IBOutlet var appview: JSAppView! // Change type from WKWebView to JSAppView
     
     override func loadView() {
         super.loadView()

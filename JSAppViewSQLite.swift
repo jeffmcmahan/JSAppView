@@ -1,6 +1,8 @@
 import Foundation
 import SQLite3
 
+var results = "" // A js object array string of the results.
+
 class JSAppViewSQLite {
 
     var path: String!
@@ -25,22 +27,6 @@ class JSAppViewSQLite {
     
     public func query(sql: String) -> String {
         // Connect if we haven't already.
-        if !self.connected {
-            let status = self.connect()
-            if status != "success" {
-                let desc = "Could not open SQLite database."
-                print(desc)
-                return "new Error(`\(desc)`)"
-            }
-        }
-        
-        var results = "'Results go here.'"
-        // Execute queries directly.
-        sqlite3_exec(self.db, sql, { resultVoidPointer, columnCount, values, columns in
-            // Do stuff.
-            return 0
-        }, nil, nil)
-        
-        return results
+        return "'This does not work yet.'"
     }
 }
