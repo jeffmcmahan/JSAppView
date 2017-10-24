@@ -13,7 +13,8 @@ module.exports = {
   },
   externals: {
     fs: 'JSAppView_fs',
-    path: 'JSAppView_path'
+    path: 'JSAppView_path',
+    sqlite: 'JSAppView_sqlite'
   }
 }
 ```
