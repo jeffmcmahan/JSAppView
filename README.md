@@ -1,5 +1,5 @@
 # JSAppView
-JSAppView is a swift class that extends iOS's WKWebView class to offer persistent storage via a node.js-like API, and easy including of local files within the web view.
+JSAppView is a swift class that extends iOS's WKWebView class to offer persistent storage via a node.js-like API, and to offer easy inclusion of local files within the web view (as in: `<img src="bg.png">`).
 
 ## Javascript API
 On the main WKWebView javascript thread (i.e., in your web app), you can access `window.JSAppView_fs`, `window.JSAppView_path`, and `window.JSAppView_sqlite`. However, tools like Webpack and Browserify can alias these variables to make things look and feel more like node.js. Here's an example webpack.config.js file:
@@ -95,7 +95,7 @@ path.isAbsolute(__dirname)        // true
 ```
 
 ### SQLite (@todo)
-A single SQLite database is created and made available to your app, via an `.sqlite` member, to one or more semicolon-separated which SQL statements can be passed. The function returns a promise which resolves results or rejects with errors. Under the hood, this is done via the [SQLite C interface](https://sqlite.org/c3ref/exec.html), without third party libraries, wrappers, helpers, etc.).
+A single SQLite database is created and made available to your app, via an `.sqlite` member, to which one or more semicolon-separated which SQL statements can be passed. The function returns a promise which resolves results or rejects with errors. Under the hood, this is done via the [SQLite C interface](https://sqlite.org/c3ref/exec.html), without third party libraries, wrappers, helpers, etc.).
 
 ```js
 const sqlite = window.JSAppView_sqlite
