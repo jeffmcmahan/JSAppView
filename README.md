@@ -2,10 +2,7 @@
 JSAppView is a swift class that extends iOS's WKWebView class to offer persistent storage via a node.js-like API, and easy including of local files within the web view.
 
 ## Javascript API
-On the main WKWebView javascript thread (i.e., in your web app), you can access the API at `window.JSAppView`. It has two properties: `fs`, which is the file system API and `sqlite` which is the database API.
-
-## With Webpack
-Tools like Webpack can easily alias the tools provided by JSAppView to make things look and feel familiar to a node developer. Here's an example webpack.config.js file:
+On the main WKWebView javascript thread (i.e., in your web app), can access `window.JSAppView_fs`, `window.JSAppView_path`, and `window.JSAppView_sqlite`. However, tools like Webpack and Browserify can alias these variables to make things look and feel more like node.js. Here's an example webpack.config.js file:
 
 ```js
 module.exports = {
