@@ -73,8 +73,8 @@ class JSAppViewFileSystem {
      Reads the contents of the Documents directory and returns a list.
      - returns: String - a javascript array literal or Error initialization.
     */
-    public func readdir() -> String {
-        let url = URL(string: self.path)
+    public func readdir(dirPath: String) -> String {
+        let url = URL(string: dirPath)
         var filesList = ""
         do {
             let files = try FileManager.default.contentsOfDirectory(at: url!, includingPropertiesForKeys: nil, options: [])

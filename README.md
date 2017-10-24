@@ -8,13 +8,13 @@ On the main WKWebView javascript thread (i.e., in your web app), you can access 
 ```js
 const {fs} = window.JSAppView
 
-fs.root                                          // String - 'file://.../Documents
-fs.getFileURL(basename:String)                   // String - 'file://.../Documents/<basename>'
+__dirname                                        // 'file://.../Documents'
+__filename                                       // 'file://.../Documents/index.html'
 fs.exists(basename:String)                       // Promise<Boolean>
-fs.readFile(basename:String, encoding:String)    // Promise<String>
-fs.writeFile(basename:String, data:String)       // Promise<String> - file:// URL of the file
-fs.readdir()                                     // Promise<Array> - /Documents contents
-fs.unlink(basename:String)                       // Promise<String> - file:// URL of the file
+fs.readFile(basename:String, encoding:String)    // Promise<String> - File contents
+fs.writeFile(basename:String, data:String)       // Promise<String> - Abs path to the file
+fs.unlink(basename:String)                       // Promise<String> - Abs path to the file
+fs.readdir(dirpath:String)                       // Promise<Array> - dir contents
 fs.downloadToFile(url:String, basename:String)   // Promise<Object> - {url, status}
 fs.downloadFiles(urls:Array<String>)             // Promise<Array<Object>> with progress API
 ```
@@ -54,6 +54,20 @@ try {
 } catch(err) {
   handlerErr(err)
 }
+```
+
+### Path Module
+The path module mimics a subset of the node.js module of the same name, but dispenses with non-POSIX functionality, and with functionality aimed at complex path parsing and generation, since JSAppView keeps everything in a single, flat directory.
+
+```js
+const {path} = window.JSAppView
+
+path.join(__dirname, 'log.txt')   // 'file://.../Documents/log.txt'
+path.basename(fpath)              // 'log.txt'
+path.basename(fpath, '.txt')      // 'log'
+path.dirname('/foo/bar/baz')      // '/foo/bar/'
+path.extname('log.txt')           // '.txt'
+path.isAbsolute(__dirname)        // true
 ```
 
 ### SQLite (@todo)

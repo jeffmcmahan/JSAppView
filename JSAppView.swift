@@ -149,7 +149,8 @@ extension ViewController : WKScriptMessageHandler {
         if (message.name == "JSAppViewFileSystem_readdir") {
             let args = message.body as! Array<String>
             let id = args[0]
-            let result = fs.readdir()
+            let path = args[1]
+            let result = fs.readdir(dirPath: path)
             self.appview.jsCallback(id: id, js: result)
         }
         if (message.name == "JSAppViewFileSystem_exists") {
