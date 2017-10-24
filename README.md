@@ -4,9 +4,36 @@ JSAppView is a swift class that extends iOS's WKWebView class to offer persisten
 ## Javascript API
 On the main WKWebView javascript thread (i.e., in your web app), you can access the API at `window.JSAppView`. It has two properties: `fs`, which is the file system API and `sqlite` which is the database API.
 
+## With Webpack
+Tools like Webpack can easily alias the tools provided by JSAppView to make things look and feel familiar to a node developer. Here's an example webpack.config.js file:
+
+```js
+module.exports = {
+  entry: './src/index.js',
+  output: {
+    path: __dirname,
+    filename: './build/bundle.js'
+  },
+  externals: {
+    fs: 'JSAppView_fs',
+    path: 'JSAppView_path'
+  }
+}
+```
+
+Using the above in combination with webpack, `fs`, `path`, and `sqlite` can be used with `require` calls as follows:
+
+```js
+const fs = require('fs')
+const path = require('path')
+const sqlite = require('sqlite')
+
+// Do stuff.
+```
+
 ### File System
 ```js
-const {fs} = window.JSAppView
+const fs = window.JSAppView_fs
 
 __dirname                                        // 'file://.../Documents'
 __filename                                       // 'file://.../Documents/index.html'
@@ -60,7 +87,7 @@ try {
 The path module mimics a subset of the node.js module of the same name, but dispenses with non-POSIX functionality, and with functionality aimed at complex path parsing and generation, since JSAppView keeps everything in a single, flat directory.
 
 ```js
-const {path} = window.JSAppView
+const path = window.JSAppView_path
 
 path.join(__dirname, 'log.txt')   // 'file://.../Documents/log.txt'
 path.basename(fpath)              // 'log.txt'
@@ -74,7 +101,7 @@ path.isAbsolute(__dirname)        // true
 A single SQLite database is created and made available to your app, via an `.sqlite` member, to one or more semicolon-separated which SQL statements can be passed. The function returns a promise which resolves results or rejects with errors. Under the hood, this is done via the [SQLite C interface](https://sqlite.org/c3ref/exec.html), without third party libraries, wrappers, helpers, etc.).
 
 ```js
-const {sqlite} = window.JSAppView
+const sqlite = window.JSAppView_sqlite
 
 try {
   const results = await sqlite('select * from ...')

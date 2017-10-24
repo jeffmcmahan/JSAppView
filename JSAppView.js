@@ -290,18 +290,25 @@
       )
       return systemCall('JSAppViewSQLite_query', arguments)
     }
-    
-    window.__dirname = window.JSAppViewFileSystem_root
-    window.__filename = window.__dirname + 'index.html'
+
     const path = {join, basename, extname, dirname, isAbsolute}
     const fs = {exists, readFile, writeFile, readdir, unlink, downloadToFile, downloadFiles}
-    window.JSAppView = {fs, path, sqlite, __callbacks:[], __progress:[]}
-    delete window.JSAppViewFileSystem_root
+
+    // Expose globals.
+    // @note __dirname was already exposed by JSAppView.swift.
+    window.__filename = path.join(window.__dirname, 'index.html')
+    window.JSAppView = {__callbacks:[], __progress:[]}
+    window.JSAppView_sqlite = sqlite
+    window.JSAppView_fs = fs
+    window.JSAppView_path = path
   }
 
+  // Wrap it in a try/catch to prevent window.onerror from swallowing it.
   try {
     defineAPI()
+    console.log('JSAppView libraries ready.')
   } catch(err) {
+    console.log('JSAppView libraries failed execute.')
     log(err)
   }
 })();

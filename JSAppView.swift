@@ -75,7 +75,7 @@ class JSAppView : WKWebView {
     */
     public func ready() -> Void {
         self.loadFileURL(fs.indexHtmlURL, allowingReadAccessTo: fs.documentsURL)
-        let code = "window.JSAppViewFileSystem_root='\(fs.path)';\(fs.jslib)"
+        let code = "window.__dirname='\(fs.path)';\(fs.jslib)"
         self.evaluateJavaScript(code, completionHandler: { result, error in
             if error != nil { print("JS Error: \(String(describing: error))") }
         })
