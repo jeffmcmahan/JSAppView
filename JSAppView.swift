@@ -13,6 +13,7 @@ class JSAppView : WKWebView {
     init(viewController: ViewController) {
         self.userContentController = WKUserContentController()
         let config = WKWebViewConfiguration()
+        config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
         config.userContentController = userContentController
         super.init(frame: viewController.view.bounds, configuration: config)
         self.scrollView.isScrollEnabled = false
@@ -71,14 +72,13 @@ class JSAppView : WKWebView {
     }
     
     /**
-     Defines the JS API within the WKWebView by executing JSAppView.js
+     Defines the JS API within the WKWebView by executing JSAppView.js, and then
+     loads index.html.
     */
     public func ready() -> Void {
+        let code = "window.__dirname='\(fs.path)';\(fs.jslib);"
+        self.js(code: code)
         self.loadFileURL(fs.indexHtmlURL, allowingReadAccessTo: fs.documentsURL)
-        let code = "window.__dirname='\(fs.path)';\(fs.jslib)"
-        self.evaluateJavaScript(code, completionHandler: { result, error in
-            if error != nil { print("JS Error: \(String(describing: error))") }
-        })
     }
     
     /**

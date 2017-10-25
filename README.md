@@ -11,6 +11,11 @@ module.exports = {
     path: __dirname,
     filename: './build/bundle.js'
   },
+  target: 'node',       // Tell webpack to assume the environment is node.
+  node: {
+    __dirname: false,   // Tell webpack not to define this.
+    __filename: false,  // Tell webpack not to define this.
+  },
   externals: {
     fs: 'JSAppView_fs',
     path: 'JSAppView_path',
@@ -21,6 +26,8 @@ module.exports = {
 
 Using the above in combination with webpack, `fs`, `path`, and `sqlite` can be used with `require` calls as follows:
 
+NOTICE: Failing to configure the `target` (and `node`) may result in the `__dirname` and `__filename` variables having incorrect values in certain contexts because webpack uses these variables to bundle the code (webpack assumes, incorrectly in our case, that `/` will work as a file system root).
+
 ```js
 const fs = require('fs')
 const path = require('path')
@@ -30,11 +37,14 @@ const sqlite = require('sqlite')
 ```
 
 ### File System
+The file system module mimics the node.js `fs` API, but asynchronous function return promises instead of accepting callbacks. Performance is good - much better than the Cordova file plugin and internal web-server-based implementations, in my experience. A `readdir` call to a directory containing 1,500 files takes 15-18ms; `readFile` resolves data in 1-4ms.
+
 ```js
 const fs = window.JSAppView_fs
 
 __dirname                                        // 'file://.../Documents'
 __filename                                       // 'file://.../Documents/index.html'
+
 fs.exists(basename:String)                       // Promise<Boolean>
 fs.readFile(basename:String, encoding:String)    // Promise<String> - File contents
 fs.writeFile(basename:String, data:String)       // Promise<String> - Abs path to the file
@@ -44,7 +54,9 @@ fs.downloadToFile(url:String, basename:String)   // Promise<Object> - {url, stat
 fs.downloadFiles(urls:Array<String>)             // Promise<Array<Object>> with progress API
 ```
 
-### About `fs.downloadFiles`
+### About `downloadFiles`
+`downloadFiles` can fetch large numbers of files efficiently. It's asynchronous all the way down, and has been tested on LAN connections with mass downloads of more than 1,500 files (>1gb in all). The tasks finish in 10-15 seconds, with no visible degradation in the webview's DOM, animation, or general javascript performance.
+
 **Promise:** The `Array<Object>` resolved by `fs.downloadFiles` is of the form:
 
 ```js
@@ -117,17 +129,12 @@ import WebKit
 
 class ViewController: UIViewController {
 
-    @IBOutlet var appview: JSAppView! // Change type from WKWebView to JSAppView
-    
+   @IBOutlet var appview: JSAppView!
     override func loadView() {
         super.loadView()
         appview = JSAppView(viewController: self)
+        appview.ready()
         self.view = appview
-    }
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        appview.ready() // Tell the JSAppView that we're ready to run the app.
     }
 }
 ```
