@@ -29,7 +29,7 @@ In Xcode, the file tree should look like this:
     - myapp.js
     - style.css
     - ...
-  - JSAppView
+  - JSAppView/
     - JSAppView.js
     - JSAppView.swift
     - JSAppViewFileSystem.swift
