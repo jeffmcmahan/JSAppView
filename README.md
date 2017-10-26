@@ -19,6 +19,40 @@ class ViewController: UIViewController {
 }
 ```
 
+In Xcode, the file tree should look like this:
+
+```
+- appName/
+  - www/
+    - bg.png
+    - index.html
+    - myapp.js
+    - style.css
+    - ...
+  - JSAppView
+    - JSAppView.js
+    - JSAppView.swift
+    - JSAppViewFileSystem.swift
+    - JSAppViewSQLite.swift
+  - AppDelegate.swift
+  - ViewController.swift
+  - Main.storyboard
+  - Assets.xcassets
+  - LaunchScreen.storyboard
+  - Info.plist
+```
+
+### Develop with local networking:
+It is generally helpful to enable local networking for development purposes, and then point API requests to localhost or <computer-name>.local. Do that as follows:
+
+```
+<key>NSAppTransportSecurity</key>
+<dict>
+    <key>NSAllowsLocalNetworking</key>
+    <true/>
+</dict>
+```
+
 ## Javascript API
 On the main WKWebView javascript thread (i.e., in your web app), you can access `window.JSAppView_fs`, `window.JSAppView_path`, and `window.JSAppView_sqlite`. However, tools like Webpack and Browserify can alias these variables to make things look and feel more like node.js. Here's an example webpack.config.js file:
 
