@@ -1,24 +1,23 @@
 # JSAppView
 JSAppView is a swift class that extends iOS's WKWebView class to offer clean persistent storage APIs, easy inclusion of local files in the DOM (as in: `<img src="bg.png">`), and a smoother development experience in general.
 
-## Console
-Logging data with `console.log` or `console.error` will print output in both the browser console and in XCode. Circular and redundant objects and arrays are handled effectively, and types are stated explicitly for primitive values in the XCode console. For example:
+## Setup in Swift + Xcode
+Add all JSAppView files to an Xcode project, along with core web app files. In the main storyboard, add a WKWebView with a subview, and attach it to ViewController.swift. It should look as shown below.
 
+```swift
+import WebKit
+
+class ViewController: UIViewController {
+
+    @IBOutlet var appview: JSAppView!
+    override func loadView() {
+        super.loadView()
+        appview = JSAppView(viewController: self)
+        appview.ready()
+        self.view = appview
+    }
+}
 ```
-console.log('Hello world!')
-```
-
-Produces the following in the native console:
-
-```
-<JSAppView>
-
-  String: Hello world!
-
-</JSAppView>
-```
-
-Care has been taken to ensure that the web view provides ample error data to `window.onerror` without requiring `crossorigin` script includes and CORS headers. This makes it possible to debug HTML5 apps without constant recourse to the Safari Web Inspector.
 
 ## Javascript API
 On the main WKWebView javascript thread (i.e., in your web app), you can access `window.JSAppView_fs`, `window.JSAppView_path`, and `window.JSAppView_sqlite`. However, tools like Webpack and Browserify can alias these variables to make things look and feel more like node.js. Here's an example webpack.config.js file:
@@ -126,6 +125,25 @@ path.extname('log.txt')           // '.txt'
 path.isAbsolute(__dirname)        // true
 ```
 
+## Console.log
+Logging data with `console.log` or `console.error` will print output in both the browser console and in XCode. Circular and redundant objects and arrays are handled effectively, and types are stated explicitly for primitive values in the XCode console. For example:
+
+```
+console.log('Hello world!')
+```
+
+Produces the following in the native console:
+
+```
+<JSAppView>
+
+  String: Hello world!
+
+</JSAppView>
+```
+
+Care has been taken to ensure that the web view provides ample error data to `window.onerror` without requiring `crossorigin` script includes and CORS headers. This makes it possible to debug HTML5 apps without constant recourse to the Safari Web Inspector.
+
 ### SQLite (@todo)
 A single SQLite database is created and made available to your app, via an `.sqlite` member, to which one or more semicolon-separated which SQL statements can be passed. The function returns a promise which resolves results or rejects with errors. Under the hood, this is done via the [SQLite C interface](https://sqlite.org/c3ref/exec.html), without third party libraries, wrappers, helpers, etc.).
 
@@ -137,23 +155,5 @@ try {
   doSomething(results)
 } catch (err) {
   console.log(err)
-}
-```
-
-## Swift 4 + Xcode 9
-Add JSAppView files to an Xcode project, along with core web app files. In the main storyboard, create a WKWebView with a subview, and attach it to ViewController.swift. It should look as shown below.
-
-```swift
-import WebKit
-
-class ViewController: UIViewController {
-
-   @IBOutlet var appview: JSAppView!
-    override func loadView() {
-        super.loadView()
-        appview = JSAppView(viewController: self)
-        appview.ready()
-        self.view = appview
-    }
 }
 ```
