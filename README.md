@@ -42,8 +42,7 @@ In Xcode, the file tree should look like this:
   - Info.plist
 ```
 
-### Develop with local networking:
-It is generally helpful to enable local networking for development purposes, and then point API requests to localhost or <computer-name>.local. Do that as follows:
+To use local networking for development purposes, add the following to info.plist:
 
 ```
 <key>NSAppTransportSecurity</key>
