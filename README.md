@@ -2,7 +2,7 @@
 JSAppView is a swift class that extends iOS's WKWebView class to offer clean persistent storage APIs, easy inclusion of local files in the DOM (as in: `<img src="bg.png">`), and a smoother development experience in general.
 
 ## Console
-Loggin anything with `console.log` or `console.error` will produce console output in both the browser inspector (if open), and in the XCode console. Circular/redundant objects and arrays are handled effectively, and types are stated explicitly for primitive values. For instance:
+Logging data with `console.log` or `console.error` will print output in both the browser console and in XCode. Circular and redundant objects and arrays are handled effectively, and types are stated explicitly for primitive values in the XCode console. For example:
 
 ```
 console.log('Hello world!')
@@ -18,7 +18,7 @@ Produces the following in the native console:
 </JSAppView>
 ```
 
-Care has been taken to ensure that the web view provides ample error data to `window.onerror` without requiring `crossorigin` script includes and CORS headers. This makes it possible to develop javascript apps without constant recourse to the Safari Web Inspector to retrieve error information.
+Care has been taken to ensure that the web view provides ample error data to `window.onerror` without requiring `crossorigin` script includes and CORS headers. This makes it possible to debug HTML5 apps without constant recourse to the Safari Web Inspector.
 
 ## Javascript API
 On the main WKWebView javascript thread (i.e., in your web app), you can access `window.JSAppView_fs`, `window.JSAppView_path`, and `window.JSAppView_sqlite`. However, tools like Webpack and Browserify can alias these variables to make things look and feel more like node.js. Here's an example webpack.config.js file:
