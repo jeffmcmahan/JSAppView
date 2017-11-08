@@ -2,9 +2,24 @@ import WebKit
 let fs = JSAppViewFileSystem()
 let sqlite = JSAppViewSQLite(docsDir: fs.path)
 
+// Determine the build environment.
+var env: String {
+    var _env = ""
+    #if RELEASE
+        _env = "release"
+    #elseif DEBUG
+        _env = "debug"
+    #else
+        _env = "not specified"
+    #endif
+    return _env
+}
+
 class JSAppView : WKWebView {
 
     var userContentController: WKUserContentController!
+    
+    let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as! String
     
     required init(coder decoder: NSCoder) {
         super.init(coder: decoder)!
@@ -44,7 +59,7 @@ class JSAppView : WKWebView {
     private func isWebFile(fname: String) -> Bool {
         let pat = "[.]((html?)|(js)|(css)|(jpe?g)|(gif)|(png)|(svg)|(woff2?)|(ttf))$"
         let regex = try! NSRegularExpression(pattern: pat, options: [.caseInsensitive])
-        let matches = regex.matches(in: fname, options: [], range: NSRange(location: 0, length: fname.characters.count))
+        let matches = regex.matches(in: fname, options: [], range: NSRange(location: 0, length: fname.count))
         return matches.count > 0
     }
     
@@ -76,8 +91,9 @@ class JSAppView : WKWebView {
      loads index.html.
     */
     public func ready() -> Void {
-        let code = "window.__dirname='\(fs.path)';\(fs.jslib);"
-        self.js(code: code)
+        let buildInfo = "window.__build={version:'\(self.appVersion)', env:'\(env)'};"
+        let dirnameDef = "window.__dirname='\(fs.path)';"
+        self.js(code: buildInfo + dirnameDef + fs.jslib)
         self.loadFileURL(fs.indexHtmlURL, allowingReadAccessTo: fs.documentsURL)
     }
     

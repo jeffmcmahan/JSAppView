@@ -10,9 +10,10 @@
 		const file = (err.file || '(no file provided)').split(__dirname).join('...')
 		const line = err.line || '(no line provided)'
 		const column = err.column || '(no column provided)'
-		const stack = err.stack ? err.stack.split(__dirname).join('...') : '(no stack provided)'
+		const stack = err.stack ? err.stack.split(__dirname).join('.../') : '(no stack provided)'
+        const message = err.message.split(__dirname).join('.../')
 		return (
-			`${err.constructor.name}: ${err.message}\n\n`+
+			`${err.constructor.name}: ${message}\n\n`+
 			`in ${file} at line ${line}, column ${column}\n\n${stack}`
 		)
 	}
@@ -109,8 +110,7 @@
 
 	// Listen for onerror events and send them to the console.
 	window.onerror = function (messageOrEvent, source, lineno, colno, error) {
-		// @todo Make this output prettier.
-		console.log(`Error in ${source || '(?)'} at line ${lineno}.`, messageOrEvent, error)
+		console.error(error)
 		return true
 	}
 
