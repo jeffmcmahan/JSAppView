@@ -33,6 +33,7 @@ class JSAppView : WKWebView {
         super.init(frame: viewController.view.bounds, configuration: config)
         self.scrollView.isScrollEnabled = false
         userContentController.add(viewController, name: "PRINT")
+        userContentController.add(viewController, name: "JSAppViewOpenUrlInSafari")
         
         // File system message handlers:
         userContentController.add(viewController, name: "JSAppViewFileSystem_downloadToFile")
@@ -41,6 +42,7 @@ class JSAppView : WKWebView {
         userContentController.add(viewController, name: "JSAppViewFileSystem_readFile")
         userContentController.add(viewController, name: "JSAppViewFileSystem_readdir")
         userContentController.add(viewController, name: "JSAppViewFileSystem_exists")
+        userContentController.add(viewController, name: "JSAppViewFileSystem_stat")
         userContentController.add(viewController, name: "JSAppViewFileSystem_unlink")
         
         // SQLite message handler:
@@ -50,9 +52,8 @@ class JSAppView : WKWebView {
     }
     
     /**
-     Determines whether the given basename points to an HTML5 file (html, css, js,
-     images (and eventually fonts, videos, audio, etc.)).
-     - todo: Add font files to this.
+     Determines whether the given basename points to an HTML5 file - html, css, js,
+     images, fonts, (evntually video and audio).
      - parameter fname: String
      - returns: Bool
     */
@@ -133,6 +134,19 @@ extension ViewController : WKScriptMessageHandler {
         if (message.name == "PRINT") {
             print(message.body as! String)
         }
+        
+        if (message.name == "JSAppViewOpenUrlInSafari") {
+            let args = message.body as! Array<String>
+            let id = args[0]
+            let url = URL(string: args[1])!
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                self.appview.jsCallback(id: id, js: "") // Resolve js Promise<Void>
+            } else {
+                self.appview.jsCallback(id: id, js: "new Error('Invalid link.')")
+            }
+        }
+        
         if (message.name == "JSAppViewFileSystem_downloadToFile") {
             let args = message.body as! Array<String>
             let id = args[0]
@@ -176,6 +190,13 @@ extension ViewController : WKScriptMessageHandler {
             let result = fs.exists(fname: fname)
             self.appview.jsCallback(id: id, js: result)
         }
+        if (message.name == "JSAppViewFileSystem_stat") {
+            let args = message.body as! Array<String>
+            let id = args[0]
+            let fname = args[1]
+            let result = fs.stat(fname: fname)
+            self.appview.jsCallback(id: id, js: result)
+        }
         if (message.name == "JSAppViewFileSystem_unlink") {
             let args = message.body as! Array<String>
             let id = args[0]
@@ -183,6 +204,7 @@ extension ViewController : WKScriptMessageHandler {
             let result = fs.unlink(fname: fname)
             self.appview.jsCallback(id: id, js: result)
         }
+        
         if (message.name == "JSAppViewSQLite_query") {
             let args = message.body as! Array<String>
             let id = args[0]

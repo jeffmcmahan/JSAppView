@@ -88,7 +88,9 @@ const sqlite = require('sqlite')
 ```
 
 ### File System
-The file system module mimics the node.js `fs` API, but asynchronous function return promises instead of accepting callbacks. Performance is good - much better than the Cordova file plugin and internal web-server-based implementations, in my experience. A `readdir` call to a directory containing 1,500 files takes 15-18ms; `readFile` resolves data in 1-4ms.
+The file system module mimics the node.js `fs` API, but functions return promises instead of accepting callbacks. Performance is good - much better than the Cordova file plugin and internal web-server-based implementations, in my experience. A `readdir` call to a directory containing 1,500 files takes 15-18ms; `readFile` resolves data in 1-4ms.
+
+At present, the `fs` functions assume that you're working in the Documents directory. Function like `mkdir` and secure handling of full file paths for reading and writing files are in todo status.
 
 ```js
 const fs = window.JSAppView_fs
@@ -97,12 +99,13 @@ __dirname                                        // 'file://.../Documents'
 __filename                                       // 'file://.../Documents/index.html'
 
 fs.exists(basename:String)                       // Promise<Boolean>
-fs.readFile(basename:String, encoding:String)    // Promise<String> - File contents
-fs.writeFile(basename:String, data:String)       // Promise<String> - Abs path to the file
-fs.unlink(basename:String)                       // Promise<String> - Abs path to the file
-fs.readdir(dirpath:String)                       // Promise<Array> - dir contents
+fs.stat(basename: String)                        // Promise<Object> - {birthtime, mtime, size}
+fs.readFile(basename:String, encoding:String)    // Promise<String> - base64 or utf8
+fs.writeFile(basename:String, data:String)       // Promise<Void>
+fs.unlink(basename:String)                       // Promise<Void>
+fs.readdir(dirpath:String)                       // Promise<Array<String>>
 fs.downloadToFile(url:String, basename:String)   // Promise<Object> - {url, status}
-fs.downloadFiles(urls:Array<String>)             // Promise<Array<Object>> with progress API
+fs.downloadFiles(urls:Array<String>)             // Promise<Array<Object>>
 ```
 
 ### About `downloadFiles`
@@ -158,6 +161,23 @@ path.extname('log.txt')           // '.txt'
 path.isAbsolute(__dirname)        // true
 ```
 
+### Safari
+A simple API is provided enabling the JS app thread to background the app and open a link using Safari. This is particularly useful for itms-services links, which can be  used trigger over-the-air updates for enterprise applications.
+
+```js
+JSAppView.openUrlInSafari('itms-services://?action=download-manifest&url=...')
+```
+
+### App Build Information
+The `window.__build` object provides basic information about the iOS bundle, which is useful when, *e.g.,* checking for updates, or determining whether the app should use a development or production server address at runtime.
+
+```js
+window.__build.version  // '1.0'
+window.__build.env      // 'debug', 'release', or
+```
+
+To get useful information from the `env` member, you must create two swift flags in XCode. Open *Build Settings* and  type "swift flags" into the filter field. Add a debug flag with `-DDEBUG` as the value, and add a release flag with `-DRELEASE` as the value. XCode informs JSAppView whether the app is being built for testing/debugging, or for distribution. If the flags are not setup, `env` will default to `not specified`.
+
 ## Console.log
 Logging data with `console.log` or `console.error` will print output in both the browser console and in XCode. Circular and redundant objects and arrays are handled effectively, and types are stated explicitly for primitive values in the XCode console. For example:
 
@@ -165,7 +185,7 @@ Logging data with `console.log` or `console.error` will print output in both the
 console.log('Hello world!')
 ```
 
-Produces the following in the native console:
+Produces the following in the XCode console:
 
 ```
 <JSAppView>

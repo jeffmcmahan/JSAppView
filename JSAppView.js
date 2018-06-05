@@ -84,10 +84,10 @@
 		return cleanUp(output)
 	}
 	
-	/**
-	 Print a set of values to the native iOS console.
-	 - param vals: Array
-	 */
+	/*
+    Print a set of values to the native iOS console.
+    - param vals: Array
+    */
 	function log(vals) {
 		vals = vals.map(val => serialize(val)).join('\n\n').split('\n').join('\n  ')
 		window.webkit.messageHandlers.PRINT.postMessage(
@@ -161,24 +161,26 @@
 
 	//============================================================= API FUNCTIONS ==================
 
-	/**
-	 Pass the given args to the WKWebView message of the given name, and fire 
-	 the correct callback back when finished, to resolve or reject the 
-	 returned Promise.
-	 - param name: String --- A non-empty string.
-	 - param args: Object<Arguments>
-	 - returns: Promise<*> --- Whatever the native function evals
-	 */
+	/*
+    Pass the given args to the WKWebView message of the given name, and fire
+    the correct callback back when finished, to resolve or reject the
+    returned Promise.
+    - param name: String --- A non-empty string.
+    - param args: Object<Arguments>
+    - returns: Promise<*> --- Whatever the native function evals
+    */
 	function systemCall(name, args) {
 		const uid = Math.random().toString()
 		const promise = new Promise((resolve, reject) => {
 			
 			// Enable the Promise API
 			window.JSAppView.__callbacks[uid] = function (result) {
-				delete window.JSAppView.__callbacks[uid]
-				delete window.JSAppView.__progress[uid]
+				delete window.JSAppView.__callbacks[uid] // Clean up
+				delete window.JSAppView.__progress[uid] // Clean up
 				if (result instanceof Error) {
 					reject(result)
+                } else if (result === 'void-a0331d36011d813b') {
+                    resolve() // Don't resolve anything when we see the void-... sequence.
 				} else {
 					if (typeof result === 'string') {
 						result = result.split('\\`').join('`').split('\\${').join('${')
@@ -202,24 +204,37 @@
 		}
 		return promise
 	}
+ 
+    /*
+    Get a file stat from iOS.
+    - param basename: String
+    - returns: Promise<Object>
+    */
+    function stat(basename) {
+        argsCount('exists', 1, arguments)
+        isBasename(basename)
+        // Todo: Define ctime
+        // Alter date formats to match nodejs API?
+        return systemCall('JSAppViewFileSystem_stat', arguments)
+    }
 
-	/**
-	 Check whether /Documents/<basename> exists.
-	 - param basename: String
-	 - returns: Promise<Boolean>
-	 */
+	/*
+    Check whether /Documents/<basename> exists.
+    - param basename: String
+    - returns: Promise<Boolean>
+    */
 	function exists(basename) {
 		argsCount('exists', 1, arguments)
 		isBasename(basename)
 		return systemCall('JSAppViewFileSystem_exists', arguments)
 	}
 
-	/**
-	 Read /Documents/<basename> with the given encoding.
-	 - param basename: String
-	 - param encoding: String --- either 'utf8' or 'base64'
-	 - returns: Promise<String>
-	 */
+	/*
+    Read /Documents/<basename> with the given encoding.
+    - param basename: String
+    - param encoding: String --- either 'utf8' or 'base64'
+    - returns: Promise<String>
+    */
 	function readFile(basename, encoding='utf8') {
 		argsCount('readFile', 2, arguments)
 		isBasename(basename)
@@ -230,12 +245,12 @@
 		return systemCall('JSAppViewFileSystem_readFile', arguments)
 	}
 
-	/**
-	 Write the given data to /Documents/<basename>.
-	 - param basename: String
-	 - param data: String
-	 - returns: Promise<void>
-	 */
+	/*
+    Write the given data to /Documents/<basename>.
+    - param basename: String
+    - param data: String
+    - returns: Promise<void>
+    */
 	function writeFile(basename, data='') {
 		argsCount('writeFile', 2, arguments)
 		isBasename(basename)
@@ -243,57 +258,75 @@
 		return systemCall('JSAppViewFileSystem_writeFile', arguments)
 	}
 
-	/**
-	 Read the contents of the /Documents/ directory.
-	 - param basename: String
-	 - returns: Promise<Array<String>>
-	 */
+	/*
+    Read the contents of the /Documents/ directory.
+    - param basename: String
+    - returns: Promise<Array<String>>
+    */
 	function readdir(dirpath) {
 		argsCount('readdir', 1, arguments)
 		if (typeof dirpath !== 'string') throw new Error('readdir path must be a string')
 		return systemCall('JSAppViewFileSystem_readdir', arguments)
 	}
 
-	/**
-	 Delete a single file.
-	 - param basename: String
-	 - returns: Promise<void>
-	 */
+	/*
+    Delete a single file.
+    - param basename: String
+    - returns: Promise<Void>
+    */
 	function unlink(basename) {
 		argsCount('unlink', 1, arguments)
 		isBasename(basename)
 		return systemCall('JSAppViewFileSystem_unlink', arguments)
 	}
 
-	/**
-	 Download a single file.
-	 - param url: String
-	 - param basename: String
-	 - returns: Promise<void>
-	 */
+	/*
+    Download a single file.
+    - param url: String
+    - param basename: String
+    - returns: Promise<String> - 'success'
+    */
 	function downloadToFile(url, basename) {
 		argsCount('downloadToFile', 2, arguments)
 		isURL(url)
 		isBasename(basename)
-		return systemCall('JSAppViewFileSystem_downloadToFile', arguments)
+        return new Promise((resolve, reject) => {
+            systemCall('JSAppViewFileSystem_downloadToFile', arguments)
+                .then(result => {
+                    if (result.status instanceof Error) return reject(result.status)
+                    resolve('success')
+                })
+                .catch(reject)
+        })
 	}
 
-	/**
-	 Download a group of files.
-	 - param urls: Array<String>
-	 - returns: Promise<Array<Object>>
-	 */
+	/*
+    Download a group of files.
+    - param urls: Array<String>
+    - returns: Promise<Array<Object>>
+    */
 	function downloadFiles(urls) {
 		argsCount('downloadFiles', 1, arguments)
 		urls.every(isURL)
 		return systemCall('JSAppViewFileSystem_downloadFiles', urls)
 	}
+  
+    /*
+    Backgrounds the app and opens the given URL in Safari.
+    - param url: String
+    - returns: Promise<Void>
+    */
+    function openUrlInSafari(url) {
+        argsCount('OpenUrlInSafari', 1, arguments)
+        isURL(url)
+        return systemCall('JSAppViewOpenUrlInSafari', arguments)
+    }
 
-	/**
-	 Generates a path string.
-	 - param strings: Array<String>
-	 - returns: String
-	 */
+	/*
+    Generates a path string.
+    - param strings: Array<String>
+    - returns: String
+    */
 	function join(...strings) {
 		if (strings.some(str => typeof str !== 'string')) {
 			throw new TypeError('path.join accepts strings only')
@@ -307,12 +340,12 @@
 		return segments.join('/').replace(/\/+/g, '/')
 	}
 
-	/**
-	 Retrieves the basename from the given path string.
-	 - param path: String
-	 - param ext: String|void
-	 - returns String
-	 */
+	/*
+    Retrieves the basename from the given path string.
+    - param path: String
+    - param ext: String|void
+    - returns String
+    */
 	function basename(path, ext) {
 		if (typeof path !== 'string') throw new TypeError('path must be a string')
 		if (arguments.length > 1 && typeof ext !== 'string') {
@@ -325,11 +358,11 @@
 		return base
 	}
 
-	/**
-	 Retrieves the extension from the given path string.
-	 - param path: String
-	 - returns: String
-	 */
+	/*
+    Retrieves the extension from the given path string.
+    - param path: String
+    - returns: String
+    */
 	function extname(path) {
 		if (typeof path !== 'string') throw new TypeError('path must be a string')
 		const base = basename(path)
@@ -337,32 +370,32 @@
 		return '.' + base.split('.').pop()
 	}
 
-	/**
-	 Retrieves the directory name from the given path string.
-	 - param path: String
-	 - returns: String
-	 */
+	/*
+    Retrieves the directory name from the given path string.
+    - param path: String
+    - returns: String
+    */
 	function dirname(path) {
 		if (typeof path !== 'string') throw new TypeError('path must be a string')
 		return path.split('/').slice(0,-1).pop()
 	}
 
-	/**
-	 Determines whether the given path is absolute, in the context of our app,
-	 which means, it must begin with the full path to Documents/.
-	 - param path: String
-	 - returns: String
-	 */
+	/*
+    Determines whether the given path is absolute, in the context of our app,
+    which means, it must begin with the full path to Documents/.
+    - param path: String
+    - returns: String
+    */
 	function isAbsolute(path) {
 		if (typeof path !== 'string') throw new TypeError('path must be a string')
 		return path.indexOf(__dirname) === 0
 	}
 
-	/**
-	 Passes a string to the native SQLite query execution function.
-	 - param sql: String
-	 - returns: Promise<*>
-	 */
+	/*
+    Passes a string to the native SQLite query execution function.
+    - param sql: String
+    - returns: Promise<*>
+    */
 	function sqlite(sql) {
 		if (typeof sql !== 'string') throw new Error('Non-string passed as SQL query.')
 		if (arguments.length !== 1) throw new Error(
@@ -372,12 +405,12 @@
 	}
 
 	const path = {join, basename, extname, dirname, isAbsolute}
-	const fs = {exists, readFile, writeFile, readdir, unlink, downloadToFile, downloadFiles}
+	const fs = {exists, stat, readFile, writeFile, readdir, unlink, downloadToFile, downloadFiles}
 
 	// Expose globals.
 	// @note __dirname was already exposed by JSAppView.swift.
 	window.__filename = path.join(window.__dirname, 'index.html')
-	window.JSAppView = {__callbacks:[], __progress:[]}
+	window.JSAppView = {__callbacks:[], __progress:[], openUrlInSafari}
 	window.JSAppView_sqlite = sqlite
 	window.JSAppView_fs = fs
 	window.JSAppView_path = path

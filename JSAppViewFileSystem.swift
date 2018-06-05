@@ -9,7 +9,7 @@ class JSAppViewFileSystem {
     
     init() {
         self.jslib = ""
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first as URL!
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first as URL?
         self.path = (docs?.absoluteString)!
         self.documentsURL = URL(fileURLWithPath: self.path, isDirectory: true)
         self.indexHtmlURL = URL(fileURLWithPath: self.path + "index.html", isDirectory: false)
@@ -99,7 +99,7 @@ class JSAppViewFileSystem {
         let path = URL(string: self.path + fname)
         do {
             try data.write(to: path!, atomically: true, encoding: .utf8)
-            return "'\(String(describing: path))'"
+            return "'void-a0331d36011d813b'" // When this is the result, js result is Promise<Void>.
         } catch let error {
             let desc = "writeFile failed. \(String(describing: error))"
             print(desc)
@@ -123,7 +123,7 @@ class JSAppViewFileSystem {
         do {
             let fileManager = FileManager.default
             try fileManager.removeItem(at: path!)
-            return "'\(String(describing: path))'"
+            return "'void-a0331d36011d813b'"
         } catch (let error) {
             let desc = String(describing: error)
             print(desc)
@@ -144,6 +144,18 @@ class JSAppViewFileSystem {
         } else {
             return "false"
         }
+    }
+
+    public func stat(fname: String) -> String {
+        let url = URL(string: self.path + fname)
+        
+        if let attributes = try? FileManager.default.attributesOfItem(atPath: (url?.path)!) as [FileAttributeKey: Any] {
+            let birthtime = attributes[FileAttributeKey.creationDate] as! Date
+            let mtime = attributes[FileAttributeKey.modificationDate] as! Date
+            let size = attributes[FileAttributeKey.size] as! Int
+            return "{birthtime:'\(birthtime)', mtime:'\(mtime)', size:\(size)}"
+        }
+        return "new Error('ENOENT: no such file or directory, stat \(fname)')"
     }
     
     /**
