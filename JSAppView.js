@@ -128,9 +128,12 @@
 
 	// Throws if the string is not a valid basename.
 	function isBasename(val) {
+        if (/\s/.test(val)) {
+            throw new Error(`The basename parameter cannot contain spaces: "${val}".`)
+        }
 		mustBeNonEmptyString(val)
 		if (val.includes('/')) {
-			throw new Error('The basename parameter cannot contain slashes ("/").')
+			throw new Error(`The basename parameter cannot contain slashes ("/"): "${val}".`)
 		}
 	}
 
