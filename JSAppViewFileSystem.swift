@@ -14,19 +14,16 @@ class JSAppViewFileSystem {
         self.documentsURL = URL(fileURLWithPath: self.path, isDirectory: true)
         self.indexHtmlURL = URL(fileURLWithPath: self.path + "index.html", isDirectory: false)
     }
-    
+
     /**
      Read a file on the assumption that it is plain text.
      - parameter filePath: URL
-     - returns: String - UTF8 wrapped in back-tick quotes
-     - note: Will fail if the file contains back-ticks. Todo: escape them.
+     - returns: String
     */
     private func readFileAsUtf8(filePath: URL) -> String {
         do {
             let data = try String(contentsOf: filePath,  encoding: .utf8)
-            let data2 = data.replacingOccurrences(of: "`", with: "\\`")
-            let safeData = data2.replacingOccurrences(of: "${", with: "\\${")
-            return "`" + safeData + "`"
+            return "window.base64_to_unicode('" + data + "')" // Let the browser convert from base64
         } catch(let error) {
             let desc = String(describing: error)
             print(desc)
@@ -43,14 +40,14 @@ class JSAppViewFileSystem {
         do {
             let fileData = try Data.init(contentsOf: filePath)
             let data:String = fileData.base64EncodedString(options: NSData.Base64EncodingOptions.init(rawValue: 0))
-            return "'" + data + "'"
+            return "'" + data + "'" // Single quotes are safe here.
         } catch(let error) {
             let desc = String(describing: error)
             print(desc)
             return "new Error(`" + desc + "`)"
         }
     }
-    
+
     /**
      Reads a file of the given basename from the Documents directory using the
      specified encoding.
@@ -68,7 +65,7 @@ class JSAppViewFileSystem {
         }
         return "new Error('Invalid encoding (try utf8 or base64).')"
     }
-    
+
     /**
      Reads the contents of the Documents directory and returns a list.
      - returns: String - a javascript array literal or Error initialization.
@@ -88,7 +85,7 @@ class JSAppViewFileSystem {
             return "new Error('\(desc)')"
         }
     }
-    
+
     /**
      Writes the given data to a file of the given fname in the Documents directory.
      - parameter fname: String
@@ -106,7 +103,7 @@ class JSAppViewFileSystem {
             return "new Error('\(desc)')"
         }
     }
-    
+
     /**
      Delete a file of the given fname from the Documents directory.
      - parameter fname: String

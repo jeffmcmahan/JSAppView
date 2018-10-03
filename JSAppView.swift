@@ -172,7 +172,7 @@ extension ViewController : WKScriptMessageHandler {
             let args = message.body as! Array<String>
             let id = args[0]
             let fname = args[1]
-            let data = args[2]
+            let data = args[2]            
             let result = fs.writeFile(fname: fname, data: data)
             self.appview.jsCallback(id: id, js: result)
         }
@@ -204,7 +204,6 @@ extension ViewController : WKScriptMessageHandler {
             let result = fs.unlink(fname: fname)
             self.appview.jsCallback(id: id, js: result)
         }
-        
         if (message.name == "JSAppViewSQLite_query") {
             let args = message.body as! Array<String>
             let id = args[0]

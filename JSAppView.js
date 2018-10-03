@@ -4,8 +4,13 @@
 
 	const noop = ()=>{}
 
-	//============================================================= LOG FUNCTIONS ==================
+	/////////////////////////////////////////////////////////////// LOG FUNCTIONS //////////////////
 
+	/*
+	Convert an Error object into a string to be printed to the console (in XCode most usefully).
+	- param err: Error
+	- returns: String
+	*/
 	function serializeError(err) {
 		const file = (err.file || '(no file provided)').split(__dirname).join('...')
 		const line = err.line || '(no line provided)'
@@ -18,12 +23,22 @@
 		)
 	}
 	
+	/*
+	Generates an indentation string (x number of spaces) according the given depth.
+	- param depth: Number|Void
+	- returns: String
+	*/
 	function indent(depth=0) {
 		let arr = []
 		arr.length = depth * 2 + 1
 		return arr.join(' ')
 	}
 	
+	/*
+	Removes stray spaces from the given string (to produce prettier serializations).
+	- param str: String
+	- returns: String
+	*/
 	function cleanUp(str) {
 		return str
 			.replace(/{\s+}/g, '{}')
@@ -32,6 +47,13 @@
 			.replace(/,\n(\s*)\]/g, '\n$1]')
 	}
 	
+	/*
+	Produces a String representation of any primitive value, so that it can be faith-
+	fully represented in the XCode terminal.
+	- note: Also handles Function and null types (?)
+	- param val: String|Boolean|Number|null|undefined|...
+	- returns: String
+	*/
 	function serializePrimitive(val, depth) {	
 		// Primitives without constructors
 		if (typeof val === 'function') return `Function (${val.name || 'anonymous'})`
@@ -48,6 +70,13 @@
 		return !(typeof val === 'object' && val !== null)
 	}
 	
+	/*
+	Creates an XCode-friendly string representation of the given value.
+	- param val: Any
+	- param depth: Number|Void
+	- param seen: Array|Void
+	- returns: String
+	*/
 	function serialize(val, depth=0, seen=[]) {
 		if (val instanceof Error) return serializeError(val)
 		if (isPrimitive(val)) return serializePrimitive(val, depth)
@@ -86,7 +115,7 @@
 	
 	/*
     Print a set of values to the native iOS console.
-    - param vals: Array
+    - param vals: Array<Mixed>
     */
 	function log(vals) {
 		vals = vals.map(val => serialize(val)).join('\n\n').split('\n').join('\n  ')
@@ -114,7 +143,7 @@
 		return true
 	}
 
-	//============================================================= TYPE CHECKERS ==================
+	/////////////////////////////////////////////////////////////// TYPE CHECKERS //////////////////
 
 	// Throws if passed a non-string or an empty string.
 	function mustBeNonEmptyString(val) {
@@ -162,28 +191,33 @@
 		)
 	}
 
-	//============================================================= API FUNCTIONS ==================
+	/////////////////////////////////////////////////////////////// API FUNCTIONS //////////////////
 
 	/*
-    Pass the given args to the WKWebView message of the given name, and fire
-    the correct callback back when finished, to resolve or reject the
-    returned Promise.
-    - param name: String --- A non-empty string.
+    Pass the given args to the WKWebView message of the given name, and fire the correct 
+    callback back when finished, to resolve/reject the returned Promise.
+    - param name: String -- non-empty
     - param args: Object<Arguments>
-    - returns: Promise<*> --- Whatever the native function evals
+    - returns: Promise<Any> -- whatever the native function evals
     */
 	function systemCall(name, args) {
+
+		// Generate a unique ID for the system call; to keep track of callbacks.
 		const uid = Math.random().toString()
 		const promise = new Promise((resolve, reject) => {
 			
-			// Enable the Promise API
+			// Create a callback function stored with the unique ID as key.
 			window.JSAppView.__callbacks[uid] = function (result) {
-				delete window.JSAppView.__callbacks[uid] // Clean up
-				delete window.JSAppView.__progress[uid] // Clean up
+
+				// Don't let the callbacks object grow indefinitely.
+				delete window.JSAppView.__callbacks[uid]
+				delete window.JSAppView.__progress[uid]
+
+				// Check to result type and content to see how to 
 				if (result instanceof Error) {
 					reject(result)
                 } else if (result === 'void-a0331d36011d813b') {
-                    resolve() // Don't resolve anything when we see the void-... sequence.
+                    resolve() // Don't resolve anything when we see the "void-a0331..." string.
 				} else {
 					if (typeof result === 'string') {
 						result = result.split('\\`').join('`').split('\\${').join('${')
@@ -192,7 +226,8 @@
 				}
 			}
 			
-			// Issue system call
+			// Pass a message to Swift, to run native code and provide the UID, so
+			// that swift can pass the result to correct JS callback function (see above).
 			window.webkit.messageHandlers[name].postMessage([uid, ...args])
 		})
 		
@@ -233,31 +268,67 @@
 	}
 
 	/*
+    From base64, to percent-encoding, to text.
+    - param str: String
+	- returns: String
+	- note: This is used (via eval()) by JSAppViewFileSystem.swift to pass back
+			the result of reading a file.
+    */
+   window.base64_to_unicode = function (str) {
+		try {
+			return decodeURIComponent(escape(window.atob(str)))
+		} catch (err) {
+			console.log(err)
+			return err
+		}
+	}
+
+	/*
     Read /Documents/<basename> with the given encoding.
     - param basename: String
     - param encoding: String --- either 'utf8' or 'base64'
-    - returns: Promise<String>
+	- returns: Promise<String>
     */
 	function readFile(basename, encoding='utf8') {
 		argsCount('readFile', 2, arguments)
 		isBasename(basename)
-		if (!['utf8', 'base64'].includes(encoding)) throw new Error(
-			'readFile only supports utf8 and base64 encodings. To get binary data, you can refer to '+
-			'the file directly by its basename (as a src attribute, for instance).'
-		)
+		if (!['utf8', 'base64'].includes(encoding)) {
+            throw new Error(
+                'readFile only supports utf8 and base64 encodings. To get binary data, you can refer to '+
+                'the file directly by its basename (as a src attribute, for instance).'
+		    )
+        }
 		return systemCall('JSAppViewFileSystem_readFile', arguments)
 	}
+  
+    /*
+    From text, to percent-encoding, to base64.
+    - param str: String
+	- returns: String
+    */
+    window.unicode_to_base64 = function (str) {
+        try {
+            return window.btoa(unescape(encodeURIComponent(str)))
+        } catch (err) {
+            console.log(err)
+            return err
+        }
+    }
 
 	/*
     Write the given data to /Documents/<basename>.
     - param basename: String
     - param data: String
-    - returns: Promise<void>
+    - returns: Promise<Void>
     */
-	function writeFile(basename, data='') {
+	function writeFile(basename, data) {
 		argsCount('writeFile', 2, arguments)
 		isBasename(basename)
-		if (typeof data !== 'string') throw new Error('writeFile data param must be of type string.')
+		if (typeof data !== 'string') {
+            throw new Error('writeFile data param must be of type string.')
+		}
+		// Safely encode the string as base64.
+        arguments[1] = window.unicode_to_base64(data)
 		return systemCall('JSAppViewFileSystem_writeFile', arguments)
 	}
 
@@ -268,7 +339,9 @@
     */
 	function readdir(dirpath) {
 		argsCount('readdir', 1, arguments)
-		if (typeof dirpath !== 'string') throw new Error('readdir path must be a string')
+		if (typeof dirpath !== 'string') {
+            throw new Error('readdir path must be a string')
+        }
 		return systemCall('JSAppViewFileSystem_readdir', arguments)
 	}
 
@@ -294,12 +367,12 @@
 		isURL(url)
 		isBasename(basename)
         return new Promise((resolve, reject) => {
-            systemCall('JSAppViewFileSystem_downloadToFile', arguments)
-                .then(result => {
-                    if (result.status instanceof Error) return reject(result.status)
-                    resolve('success')
-                })
-                .catch(reject)
+            systemCall('JSAppViewFileSystem_downloadToFile', arguments).then(result => {
+				if (result.status instanceof Error) {
+					return reject(result.status)
+				}
+				resolve('success')
+			}).catch(reject)
         })
 	}
 
@@ -350,7 +423,9 @@
     - returns String
     */
 	function basename(path, ext) {
-		if (typeof path !== 'string') throw new TypeError('path must be a string')
+		if (typeof path !== 'string') {
+            throw new TypeError('path must be a string')
+        }
 		if (arguments.length > 1 && typeof ext !== 'string') {
 			throw new TypeError('ext must be a string')
 		}
@@ -367,9 +442,13 @@
     - returns: String
     */
 	function extname(path) {
-		if (typeof path !== 'string') throw new TypeError('path must be a string')
+		if (typeof path !== 'string') {
+            throw new TypeError('path must be a string')
+        }
 		const base = basename(path)
-		if (!~base.indexOf('.')) return ''
+		if (!~base.indexOf('.')) {
+            return ''
+        }
 		return '.' + base.split('.').pop()
 	}
 
@@ -379,7 +458,9 @@
     - returns: String
     */
 	function dirname(path) {
-		if (typeof path !== 'string') throw new TypeError('path must be a string')
+		if (typeof path !== 'string') {
+            throw new TypeError('path must be a string')
+        }
 		return path.split('/').slice(0,-1).pop()
 	}
 
@@ -390,7 +471,9 @@
     - returns: String
     */
 	function isAbsolute(path) {
-		if (typeof path !== 'string') throw new TypeError('path must be a string')
+		if (typeof path !== 'string') {
+            throw new TypeError('path must be a string')
+        }
 		return path.indexOf(__dirname) === 0
 	}
 
@@ -400,18 +483,21 @@
     - returns: Promise<*>
     */
 	function sqlite(sql) {
-		if (typeof sql !== 'string') throw new Error('Non-string passed as SQL query.')
-		if (arguments.length !== 1) throw new Error(
-			`sqlite requires exactly 1 arguments. ${arguments.length} were passed.`
-		)
+		if (typeof sql !== 'string') {
+            throw new Error('Non-string passed as SQL query.')
+        }
+		if (arguments.length !== 1) {
+            throw new Error(`sqlite requires exactly 1 arguments. ${arguments.length} were passed.`)
+        }
 		return systemCall('JSAppViewSQLite_query', arguments)
 	}
 
+	// Mimic the Node.js API surface.
 	const path = {join, basename, extname, dirname, isAbsolute}
 	const fs = {exists, stat, readFile, writeFile, readdir, unlink, downloadToFile, downloadFiles}
 
 	// Expose globals.
-	// @note __dirname was already exposed by JSAppView.swift.
+	// n.b.: window.__dirname gets defined by JSAppView.swift
 	window.__filename = path.join(window.__dirname, 'index.html')
 	window.JSAppView = {__callbacks:[], __progress:[], openUrlInSafari}
 	window.JSAppView_sqlite = sqlite
