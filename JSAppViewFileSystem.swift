@@ -163,7 +163,8 @@ class JSAppViewFileSystem {
     */
     private func download(url: URL, to: String, completion: @escaping (_ result: String) -> Void) -> Void {
         let req = URLRequest(url: url)
-        let task = URLSession.shared.downloadTask(with: req) { tmpUrl, response, error in
+        let sess = URLSession(configuration: .default)
+        let task = sess.downloadTask(with: req) { tmpUrl, response, error in
             let destUrl = URL(string: self.path + to)
             let res = response as? HTTPURLResponse
             if (res?.statusCode == 200) {
@@ -206,25 +207,52 @@ class JSAppViewFileSystem {
      - parameter fname: String
     */
     public func downloadFiles(webview: JSAppView, id: String, urls: ArraySlice<String>) -> Void {
-        var results = [String]()
-        let group = DispatchGroup()
-        for urlString in urls {
+        
+        // Handle the case where we download nothing.
+        if (urls.count < 1) {
+             webview.jsCallback(id: id, js: "[]")
+            return
+        }
+
+        var results = [String]() // Overall results.
+        var i = 0
+
+        func parallelDl() -> Void {
+            print("\(i)")
+            let urlString = urls[urls.startIndex + i]
+            i = (i + 1)
             let url = URL(string: urlString)
             let basename = url?.lastPathComponent
-            group.enter()
             self.download(url: url!, to: basename!) { result in
                 results.append(result)
-                let js = "window.JSAppView.__progress[\(id)](\(results.count), \(urls.count))"
-                webview.js(code: js)
-                group.leave()
+                if (results.count == urls.count) {
+                    // Advise the webview that we're done.
+                    var jsResults = ""
+                    for result in results {
+                        jsResults += (result + ",")
+                    }
+                    webview.jsCallback(id: id, js: "[\(jsResults)]")
+                } else {
+                    if (i < urls.count) {
+                        parallelDl() // Trigger the next download.
+                    }
+                    // Advise the webview of progress.
+                    let js = "window.JSAppView.__progress[\(id)](\(results.count), \(urls.count))"
+                    webview.js(code: js)
+                }
             }
         }
-        group.notify(queue: DispatchQueue.main) {
-            var jsResults = ""
-            for result in results {
-                jsResults += (result + ",")
-            }
-            webview.jsCallback(id: id, js: "[\(jsResults)]")
+        
+        // Start 4 downloaders in parallel (avoids timeouts).
+        parallelDl()
+        if (urls.count > 1) {
+            parallelDl()
+        }
+        if (urls.count > 2) {
+            parallelDl()
+        }
+        if (urls.count > 3) {
+            parallelDl()
         }
     }
 }
