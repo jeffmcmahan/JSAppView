@@ -6,13 +6,16 @@ class JSAppViewFileSystem {
     var jslib: String
     var documentsURL: URL
     var indexHtmlURL: URL
+    var baseURL: URL
     
     init() {
         self.jslib = ""
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first as URL?
         self.path = (docs?.absoluteString)!
         self.documentsURL = URL(fileURLWithPath: self.path, isDirectory: true)
-        self.indexHtmlURL = URL(fileURLWithPath: self.path + "index.html", isDirectory: false)
+        let indexPath = Bundle.main.path(forResource: "build.index", ofType: "html")
+        self.baseURL = URL(string: "build.index.html", relativeTo: docs)!
+        self.indexHtmlURL = URL(fileURLWithPath: indexPath!)
     }
 
     /**
@@ -111,7 +114,7 @@ class JSAppViewFileSystem {
     */
     public func unlink(fname: String) -> String {
         let path = URL(string: self.path + fname)
-        let doesExist = ((try? path?.checkResourceIsReachable()) ?? false)!
+        let doesExist = ((((try? path?.checkResourceIsReachable()) as Bool??)) ?? false)!
         if (!doesExist) {
             let desc = "Cannot delete file \(fname) because it does not exist."
             print(desc)
@@ -135,7 +138,7 @@ class JSAppViewFileSystem {
     */
     public func exists(fname: String) -> String {
         let path = URL(string: self.path + fname)
-        let doesExist = ((try? path?.checkResourceIsReachable()) ?? false)!
+        let doesExist = ((((try? path?.checkResourceIsReachable()) as Bool??)) ?? false)!
         if (doesExist) {
             return "true"
         } else {
@@ -145,7 +148,6 @@ class JSAppViewFileSystem {
 
     public func stat(fname: String) -> String {
         let url = URL(string: self.path + fname)
-        
         if let attributes = try? FileManager.default.attributesOfItem(atPath: (url?.path)!) as [FileAttributeKey: Any] {
             let birthtime = attributes[FileAttributeKey.creationDate] as! Date
             let mtime = attributes[FileAttributeKey.modificationDate] as! Date

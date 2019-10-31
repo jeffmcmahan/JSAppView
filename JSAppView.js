@@ -2,7 +2,7 @@
 
 	'use strict'
 
-	const noop = ()=>{}
+	const noop = () => {}
 
 	/////////////////////////////////////////////////////////////// LOG FUNCTIONS //////////////////
 
@@ -28,7 +28,7 @@
 	- param depth: Number|Void
 	- returns: String
 	*/
-	function indent(depth=0) {
+	function indent(depth = 0) {
 		let arr = []
 		arr.length = depth * 2 + 1
 		return arr.join(' ')
@@ -56,13 +56,21 @@
 	*/
 	function serializePrimitive(val, depth) {	
 		// Primitives without constructors
-		if (typeof val === 'function') return `Function (${val.name || 'anonymous'})`
-		if (val === null) return 'null'
-		if (typeof val === 'undefined') return 'undefined'
+        if (typeof val === 'function') {
+            return `Function (${val.name || 'anonymous'})`
+        }
+        if (val === null) {
+            return 'null'
+        }
+        if (typeof val === 'undefined') {
+          return 'undefined'
+        }
 		
 		// Primitives with constructors
 		let output = (depth === 0) ? `${val.constructor.name}: ` : ''
-		if (val instanceof Error) return output + serializeError(val)
+        if (val instanceof Error) {
+            return output + serializeError(val)
+        }
 		return output + val.toString()
 	}
 	
@@ -77,12 +85,14 @@
 	- param seen: Array|Void
 	- returns: String
 	*/
-	function serialize(val, depth=0, seen=[]) {
+	function serialize(val, depth = 0, seen = []) {
 		if (val instanceof Error) return serializeError(val)
 		if (isPrimitive(val)) return serializePrimitive(val, depth)
 		
 		// Limit depth of representation to 3 levels.
-		if (depth >= 3) return val.constructor.name
+		if (depth >= 3) return (val.constructor)
+            ? val.constructor.name
+            : ('' + val.toString)
 
 		let output = ''
 		if (depth === 0) output += `${val.constructor.name}: `
@@ -124,9 +134,10 @@
 		)
 	}
 
-	// Redefine console.log and console.error
+	// Redefine console methods.
 	const __consoleLog = console.log
 	const __consoleError = console.error
+  
 	window.console = {}
 	console.log = function (...vals) {
 		log(vals)
@@ -291,7 +302,7 @@
     */
 	function readFile(basename, encoding='utf8') {
 		argsCount('readFile', 2, arguments)
-		isBasename(basename)
+		// isBasename(basename)
 		if (!['utf8', 'base64'].includes(encoding)) {
             throw new Error(
                 'readFile only supports utf8 and base64 encodings. To get binary data, you can refer to '+
@@ -491,6 +502,20 @@
         }
 		return systemCall('JSAppViewSQLite_query', arguments)
 	}
+  
+    window.assert = condition => {
+        if (!condition) {
+            console.log('Assertion failed.')
+            throw new Error('Assertion failed.')
+        }
+    }
+  
+    window.assert.equal = (a, b) => {
+        if (a !== b) {
+            console.log('Strict equality assertion failed.', a, b)
+            throw new Error('Strict equality assertion failed.')
+        }
+    }
 
 	// Mimic the Node.js API surface.
 	const path = {join, basename, extname, dirname, isAbsolute}
@@ -498,9 +523,20 @@
 
 	// Expose globals.
 	// n.b.: window.__dirname gets defined by JSAppView.swift
-	window.__filename = path.join(window.__dirname, 'index.html')
+	window.__filename = path.join(window.__dirname, './www.js/index.html')
 	window.JSAppView = {__callbacks:[], __progress:[], openUrlInSafari}
-	window.JSAppView_sqlite = sqlite
-	window.JSAppView_fs = fs
-	window.JSAppView_path = path
+	window.sqlite = sqlite
+	window.fs = fs
+	window.path = path
+    
+  
+    // THIS IS THE WAY FORWARD
+//    fs.readFile('www.js/index.html', 'base64').then(data => {
+//
+//        //
+//
+//        document.write(atob(data))
+//        setTimeout(() => throw new Error('!'), 5000)
+//    }).catch(console.log)
+
 })();
